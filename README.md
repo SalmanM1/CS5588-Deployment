@@ -89,9 +89,7 @@ Provides **faster time-to-answer** with **higher trust** by returning an evidenc
 
 ## Deployed Application
 
-**Live App:** [TruPharma on Streamlit Cloud](https://trupharma-rag.streamlit.app)
-
-> *(Update the link above once deployed)*
+**Live App:** [https://trupharm.streamlit.app/](https://trupharm.streamlit.app/)
 
 ---
 
@@ -99,8 +97,8 @@ Provides **faster time-to-answer** with **higher trust** by returning an evidenc
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/<your-org>/Week-4-Assignment.git
-cd Week-4-Assignment
+git clone https://github.com/SalmanM1/CS5588-Deployment.git
+cd CS5588-Deployment
 
 # 2. Create a virtual environment (recommended)
 python -m venv .venv
