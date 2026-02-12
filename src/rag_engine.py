@@ -7,6 +7,7 @@ Wraps openfda_rag helpers with:
   - Interaction logging to logs/product_metrics.csv
 """
 
+import gc
 import os
 import sys
 import re
@@ -57,8 +58,8 @@ FIELD_ALLOWLIST: List[str] = [
 FIELD_BLOCKLIST = {"spl_product_data_elements"}
 
 API_BASE = "https://api.fda.gov/drug/label.json"
-DEFAULT_LIMIT = 50           # records per API page (keep small for speed)
-DEFAULT_MAX_REC = 50         # total records to pull (plenty for evidence)
+DEFAULT_LIMIT = 20           # records per API page (keep small for cloud memory)
+DEFAULT_MAX_REC = 20         # total records to pull (enough for evidence, fits in 1GB)
 USE_SENTENCE_TRANSFORMERS = False   # False = TF-IDF (fast); True = dense (slow on CPU)
 
 # ── Logging paths ────────────────────────────────────────────
@@ -369,6 +370,10 @@ def run_rag_query(
         d = _dense(query, index, corpus, e_type, e_model, vec, pool)
         s = _sparse(query, bm25, corpus, pool)
         items = [it for _, it in _fuse(d, s, 0.5, pool)]
+
+    # -- Free heavy indexing objects to keep memory low on cloud --
+    del arts, index, bm25, corpus, vec
+    gc.collect()
 
     # 4 ── Optional rerank
     if use_rerank and items:

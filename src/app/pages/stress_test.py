@@ -155,10 +155,10 @@ if run:
 
     # Stress-specific RAG settings
     stress_config = {
-        "Rare input":           {"api_limit": 50,  "max_records": 100, "top_k": 3},
-        "Large doc":            {"api_limit": 200, "max_records": 800, "top_k": 5},
-        "Heavy traffic":        {"api_limit": 50,  "max_records": 200, "top_k": 3},
-        "Conflicting evidence": {"api_limit": 100, "max_records": 400, "top_k": 5},
+        "Rare input":           {"api_limit": 20, "max_records": 20, "top_k": 3},
+        "Large doc":            {"api_limit": 20, "max_records": 20, "top_k": 5},
+        "Heavy traffic":        {"api_limit": 20, "max_records": 20, "top_k": 3},
+        "Conflicting evidence": {"api_limit": 20, "max_records": 20, "top_k": 5},
     }[stress_condition]
 
     with st.spinner(f"Running stress test: **{stress_condition}** ..."):
