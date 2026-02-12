@@ -128,7 +128,7 @@ stress_condition = st.sidebar.radio(
 )
 
 st.sidebar.caption(f"**Query:** {STRESS_QUERIES[stress_condition]}")
-run = st.sidebar.button("Run Stress Test", type="primary", use_container_width=True)
+run = st.sidebar.button("Run Stress Test", type="primary", width="stretch")
 
 
 # ══════════════════════════════════════════════════════════════

@@ -153,7 +153,6 @@ with st.sidebar.expander("Advanced Settings"):
         index=0,
     )
     top_k = st.slider("Top-K evidence", 3, 10, 5)
-    use_rerank = st.checkbox("Use cross-encoder reranking", value=False)
     gemini_key = st.text_input(
         "Google Gemini API key (optional)",
         type="password",
@@ -161,7 +160,7 @@ with st.sidebar.expander("Advanced Settings"):
              "Otherwise, a rule-based extractive fallback is used.",
     )
 
-run = st.sidebar.button("🔍 Run RAG Query", type="primary", use_container_width=True)
+run = st.sidebar.button("🔍 Run RAG Query", type="primary", width="stretch")
 
 st.sidebar.markdown("---")
 if st.sidebar.button("🔄 Reset Session"):
@@ -179,7 +178,7 @@ if run and query_text:
             gemini_key=gemini_key,
             method=method,
             top_k=top_k,
-            use_rerank=use_rerank,
+            use_rerank=False,
         )
     st.session_state.result = result
 
@@ -212,16 +211,16 @@ st.markdown(
 
 # ── Pill row ──
 c1, c2, c3, c4 = st.columns(4, gap="small")
-c1.button("Response", use_container_width=True,
+c1.button("Response", width="stretch",
            type="primary" if st.session_state.active_panel == "Response" else "secondary",
            key="pill_response", on_click=set_panel, args=("Response",))
-c2.button("Evidence / Artifacts", use_container_width=True,
+c2.button("Evidence / Artifacts", width="stretch",
            type="primary" if st.session_state.active_panel == "Evidence" else "secondary",
            key="pill_evidence", on_click=set_panel, args=("Evidence",))
-c3.button("Metrics & Monitoring", use_container_width=True,
+c3.button("Metrics & Monitoring", width="stretch",
            type="primary" if st.session_state.active_panel == "Metrics" else "secondary",
            key="pill_metrics", on_click=set_panel, args=("Metrics",))
-c4.button("Logs", use_container_width=True,
+c4.button("Logs", width="stretch",
            type="primary" if st.session_state.active_panel == "Logs" else "secondary",
            key="pill_logs", on_click=set_panel, args=("Logs",))
 
@@ -310,7 +309,7 @@ def render_logs():
     if csv_rows:
         import pandas as pd
         df = pd.DataFrame(csv_rows)
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width='stretch', hide_index=True)
     else:
         st.write("No CSV log entries yet.")
 

@@ -1,0 +1,232 @@
+\documentclass[11pt, letterpaper]{article}
+
+% ── Packages ──
+\usepackage[margin=1in]{geometry}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{parskip}
+\usepackage{tabularx}
+
+% ── Colors ──
+\definecolor{darkblue}{RGB}{30,60,110}
+\definecolor{linkblue}{RGB}{30,100,180}
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{darkgray}{RGB}{80,80,80}
+
+% ── Hyperlinks ──
+\hypersetup{
+    colorlinks=true,
+    linkcolor=darkblue,
+    urlcolor=linkblue,
+    citecolor=darkblue
+}
+
+% ── Section Formatting ──
+\titleformat{\section}
+  {\Large\bfseries\color{darkblue}}
+  {\thesection.}{0.5em}{}
+  [\vspace{-0.5em}\textcolor{darkblue}{\rule{3cm}{0.4pt}}]
+
+\titleformat{\subsection}
+  {\large\bfseries\color{darkblue!80}}
+  {\thesubsection}{0.5em}{}
+
+% ── Code Listing Style ──
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codebg},
+    xleftmargin=1em,
+    framexleftmargin=0.5em,
+    aboveskip=1em,
+    belowskip=1em
+}
+
+% ── Header / Footer ──
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{darkgray}CS 5588 \textbar\ Week-4 Integration Report}
+\fancyhead[R]{\small\color{darkgray}TruPharma RAG System}
+\fancyfoot[C]{\small\color{darkgray}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ══════════════════════════════════════════════════════════════
+\begin{document}
+
+% ── Title Block ──
+\begin{center}
+    {\LARGE\bfseries\color{darkblue} TruPharma}\\[4pt]
+    {\large Drug Label Evidence RAG System}\\[10pt]
+    {\normalsize CS 5588 \(\cdot\) Spring 2026 \(\cdot\) Week 4 Integration Report}\\[6pt]
+    {\normalsize\textbf{Team:} Salman Mirza, Amy Ngo, Nithin Songala}\\
+    {\normalsize\textbf{Module Owner:} Salman Mirza (RAG LLM)}\\[8pt]
+    \textbf{Live App:} \url{https://trupharm.streamlit.app}\\
+    \textbf{Repository:} \url{https://github.com/reddy-nithin/Week-4-Assignment-}
+\end{center}
+
+\vspace{0.3cm}
+\noindent\rule{\textwidth}{0.8pt}
+\vspace{0.2cm}
+
+% ══════════════════════════════════════════════════════════════
+\section{Where the Module Fits in the Capstone Architecture}
+
+The RAG LLM module is the core intelligence layer of TruPharma. It sits between the user-facing Streamlit UI and two external services: the \textbf{openFDA Drug Label API} (data source) and \textbf{Google Gemini 2.0 Flash} (optional LLM). The module orchestrates the full pipeline from user question to grounded, citation-enforced answer.
+
+\begin{lstlisting}
+User --> Streamlit UI --> RAG Engine (rag_engine.py)
+                              |
+                              +---> openFDA API (fetch drug label records)
+                              +---> Chunk & Index (FAISS dense + BM25 sparse)
+                              +---> Hybrid Retrieval (reciprocal rank fusion)
+                              +---> Answer Generation (Gemini LLM / extractive)
+                              +---> Logging (logs/product_metrics.csv)
+\end{lstlisting}
+
+The system fetches real-time FDA drug label records, chunks text across \textbf{10 selected label fields} (e.g., \texttt{drug\_interactions}, \texttt{dosage\_and\_administration}, \texttt{warnings}), indexes them with dual retrieval (FAISS inner-product search + BM25 Okapi), and retrieves top-K evidence via hybrid reciprocal rank fusion. Answers include inline citation IDs linking to specific label sections, and the system \textbf{refuses to answer} when evidence is insufficient.
+
+% ══════════════════════════════════════════════════════════════
+\section{Supported User Workflow}
+
+\begin{table}[h!]
+\centering
+\begin{tabularx}{\textwidth}{c l X}
+\toprule
+\textbf{Step} & \textbf{User Action} & \textbf{System Response} \\
+\midrule
+1 & Opens the app & Displays query interface with example questions \\
+2 & Types a drug question & Converts question to openFDA API search query \\
+3 & Clicks \textbf{Search} & Fetches records, runs hybrid retrieval, generates answer \\
+4 & Reviews Response Panel & Answer with inline citations (e.g., \texttt{[doc\_id::field]}) \\
+5 & Expands Evidence Panel & Source text chunks, field names, confidence scores \\
+6 & Checks Metrics Panel & Latency, records fetched, retrieval method, confidence \\
+\bottomrule
+\end{tabularx}
+\caption{User interaction workflow}
+\end{table}
+
+A \textbf{Stress Test} page (accessible via sidebar) runs three automated scenarios---drug interactions, dosage/warnings, and an out-of-scope refusal test---to validate pipeline correctness and measure latency.
+
+% ══════════════════════════════════════════════════════════════
+\section{Application Interface}
+
+The Streamlit application has two pages:
+
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Primary Demo} (\texttt{streamlit\_app.py}): Two-column layout---left column for query input and response, right column for evidence artifacts and pipeline metrics. Includes a sidebar with example queries and optional Gemini API key input.
+    \item \textbf{Stress Test} (\texttt{pages/stress\_test.py}): Automated scenario validation that runs three test queries in sequence, displaying pass/fail results, latency measurements, and evidence summaries.
+\end{itemize}
+
+The app uses a warm color theme (peach/orange accents) defined in \texttt{.streamlit/config.toml} with custom CSS for Times New Roman body text. Material Icons are preserved for Streamlit's built-in UI elements. The live app is accessible at \url{https://trupharm.streamlit.app}.
+
+% ══════════════════════════════════════════════════════════════
+\section{Logging Example}
+
+All interactions are logged to \texttt{logs/product\_metrics.csv}. The file currently contains \textbf{20 interaction records} (exceeding the $\geq$5 requirement). Sample rows:
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabularx}{\textwidth}{l X r c c c}
+\toprule
+\textbf{Timestamp} & \textbf{Query} & \textbf{Latency} & \textbf{Conf.} & \textbf{Evid.} & \textbf{Method} \\
+\midrule
+02-10 14:23 & Drug interactions for ibuprofen & 4,523 ms & 0.78 & 5 & hybrid \\
+02-10 15:01 & Dosage for acetaminophen + warnings & 3,892 ms & 0.82 & 5 & hybrid \\
+02-10 16:15 & Safety warnings for caffeine products & 5,102 ms & 0.74 & 4 & hybrid \\
+02-11 09:45 & Warnings for aspirin during pregnancy & 4,202 ms & 0.80 & 5 & hybrid \\
+02-11 10:30 & Overdosage symptoms for diphenhydramine & 3,654 ms & 0.76 & 4 & hybrid \\
+\rowcolor{codebg}
+02-11 14:12 & Projected cost of AMR to GDP in 2050 & 2,104 ms & 0.00 & 0 & hybrid \\
+02-12 08:05 & Aspirin overdosage \& when to stop use & 5,891 ms & 0.82 & 5 & hybrid \\
+\bottomrule
+\end{tabularx}
+\caption{Sample interaction logs. Row 6 (shaded) shows the refusal case---confidence = 0.0 for an out-of-scope question.}
+\end{table}
+
+\noindent\textbf{Logged fields:} \texttt{timestamp}, \texttt{query}, \texttt{latency\_ms}, \texttt{evidence\_ids}, \texttt{confidence}, \texttt{num\_evidence}, \texttt{num\_records}, \texttt{retrieval\_method}, \texttt{llm\_used}, \texttt{answer\_preview}.
+
+% ══════════════════════════════════════════════════════════════
+\section{Production Failure Scenario \& Mitigation}
+
+\textbf{Scenario:} The openFDA API returns 0 results for an obscure, misspelled, or non-drug query (e.g., \textit{``What is the projected cost of antimicrobial resistance to GDP in 2050?''}).
+
+Without mitigation, the pipeline would have no documents to index, potentially crashing or generating a hallucinated answer with no supporting evidence.
+
+\subsection*{Implemented Mitigations}
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Empty result detection:} If the API returns 0 records or HTTP 404, the system immediately returns \textit{``Not enough evidence in the retrieved context.''} instead of proceeding with retrieval.
+    \item \textbf{Confidence scoring:} The heuristic confidence drops to \textbf{0.0} when no relevant evidence is found, providing a clear trust signal.
+    \item \textbf{Logging:} Failed queries are logged with \texttt{confidence=0.0} and empty \texttt{evidence\_ids}, enabling post-hoc analysis of query coverage gaps.
+    \item \textbf{Graceful UI:} The frontend displays the refusal message rather than crashing, and the evidence panel shows \textit{``No evidence found.''}
+\end{itemize}
+
+\textbf{Future improvement:} Add fuzzy drug-name matching and spell-check suggestions before querying the API, reducing zero-result queries caused by typos.
+
+% ══════════════════════════════════════════════════════════════
+\section{Deployment Readiness Plan}
+
+\subsection*{Architecture \& Data Flow}
+
+Three-tier design: \textbf{Streamlit UI} $\rightarrow$ \textbf{RAG Engine} $\rightarrow$ \textbf{External APIs}. The RAG Engine (\texttt{rag\_engine.py}) calls \texttt{openfda\_rag.py} for API fetching, chunking, and indexing. Data flows:
+
+\begin{center}
+User query $\rightarrow$ openFDA search $\rightarrow$ fetch records $\rightarrow$ chunk (250-word windows, 40-word overlap) $\rightarrow$ index (FAISS + BM25) $\rightarrow$ hybrid retrieval $\rightarrow$ answer generation $\rightarrow$ CSV logging
+\end{center}
+
+\subsection*{Hosting \& Scaling}
+
+\begin{table}[h!]
+\centering
+\begin{tabularx}{\textwidth}{l l X}
+\toprule
+\textbf{Aspect} & \textbf{Current Approach} & \textbf{Production Path} \\
+\midrule
+Hosting & Streamlit Community Cloud (free) & Containerized deployment on AWS/GCP \\
+Data & Real-time openFDA API (no local storage) & Add Redis caching for frequently queried drugs \\
+Scaling & Single instance, API pagination & Horizontal scaling with load balancer; API key for higher rate limits \\
+Monitoring & CSV-based logging & Cloud logging (CloudWatch / Stackdriver) + alerting \\
+CI/CD & GitHub $\rightarrow$ Streamlit auto-deploy on push & GitHub Actions for automated testing + deployment \\
+\bottomrule
+\end{tabularx}
+\caption{Deployment readiness: current vs.\ production approach}
+\end{table}
+
+% ══════════════════════════════════════════════════════════════
+\section{Impact Evaluation}
+
+\begin{table}[h!]
+\centering
+\begin{tabularx}{\textwidth}{l l l X}
+\toprule
+\textbf{Metric} & \textbf{Before (Manual)} & \textbf{After (TruPharma)} & \textbf{Improvement} \\
+\midrule
+Time-to-answer & 10--15 min scanning PDFs & $<$ 5 sec per query & $\sim$99\% reduction \\
+Citation coverage & Manual copy-paste & Automatic inline citations & Full traceability \\
+Refusal accuracy & User may overlook gaps & System refuses at conf=0 & Prevents misinformation \\
+Trust indicators & None & Confidence, IDs, fields & Transparent decision basis \\
+\bottomrule
+\end{tabularx}
+\caption{Impact evaluation: before vs.\ after TruPharma deployment}
+\end{table}
+
+\textbf{Workflow improvement:} Pharmacists, clinicians, and regulatory analysts no longer need to manually scan lengthy drug label PDFs. The RAG system retrieves relevant label sections in seconds and produces answers citing exactly which label field and document the information came from.
+
+\textbf{Trust indicators:} Every answer includes (1) inline citation IDs linking to specific label sections, (2) a heuristic confidence score (0--1), (3) the count of evidence chunks retrieved, and (4) a clear refusal message when evidence is insufficient. These indicators allow users to verify answers against source material and trust the system for clinical and compliance decisions.
+
+\vspace{1cm}
+\begin{center}
+\small\color{darkgray}
+CS 5588 \(\cdot\) Spring 2026 \(\cdot\) Week 4 Integration Report
+\end{center}
+
+\end{document}
